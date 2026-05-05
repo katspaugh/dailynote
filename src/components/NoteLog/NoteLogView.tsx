@@ -159,10 +159,14 @@ export function NoteLogView({
 
   // Keep latest saveCard reachable from stable event listeners below.
   const saveCardRef = useRef(saveCard);
-  saveCardRef.current = saveCard;
+  useEffect(() => {
+    saveCardRef.current = saveCard;
+  }, [saveCard]);
 
-  // Save pending top-card input when navigating away or backgrounding the tab,
-  // so mobile users don't lose what they typed by forgetting the checkmark.
+  // Save pending top-card input when leaving the editor — in-app navigation
+  // (unmount), tab backgrounding (visibilitychange), or tab close (pagehide).
+  // Without this, typing in the new-entry card and clicking the logo or another
+  // route silently drops the input since the editor only commits on save.
   useEffect(() => {
     const saveIfHidden = () => {
       if (document.visibilityState === "hidden") saveCardRef.current();
