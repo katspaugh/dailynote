@@ -157,12 +157,26 @@ export function NoteLogView({
     }, AUTO_SAVE_MS);
   }, [saveCard]);
 
-  // Clean up timer on unmount
+  // Keep latest saveCard reachable from stable event listeners below.
+  const saveCardRef = useRef(saveCard);
+  saveCardRef.current = saveCard;
+
+  // Save pending top-card input when navigating away or backgrounding the tab,
+  // so mobile users don't lose what they typed by forgetting the checkmark.
   useEffect(() => {
+    const saveIfHidden = () => {
+      if (document.visibilityState === "hidden") saveCardRef.current();
+    };
+    const savePending = () => saveCardRef.current();
+    document.addEventListener("visibilitychange", saveIfHidden);
+    window.addEventListener("pagehide", savePending);
     return () => {
+      document.removeEventListener("visibilitychange", saveIfHidden);
+      window.removeEventListener("pagehide", savePending);
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
+      savePending();
     };
   }, []);
 
