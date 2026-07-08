@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, afterEach } from "vitest";
-import { canEditNote } from "../utils/noteRules";
+import { canEditNote, isWithinBackfillWindow } from "../utils/noteRules";
 import {
   formatDate,
   parseDate,
@@ -64,6 +64,72 @@ describe("canEditNote", () => {
   it("returns false for invalid date strings", () => {
     expect(canEditNote("invalid")).toBe(false);
     expect(canEditNote("")).toBe(false);
+  });
+
+  describe("backfilling skipped days (empty note)", () => {
+    it("allows writing an empty note for a recent past day", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0)); // noon on June 15
+      expect(canEditNote("01-06-2024", { noteIsEmpty: true })).toBe(true);
+      expect(canEditNote("14-06-2024", { noteIsEmpty: true })).toBe(true);
+    });
+
+    it("still blocks past days that already have content", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0));
+      expect(canEditNote("01-06-2024", { noteIsEmpty: false })).toBe(false);
+      expect(canEditNote("01-06-2024")).toBe(false);
+    });
+
+    it("allows exactly one month back, blocks older", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0)); // June 15
+      expect(canEditNote("15-05-2024", { noteIsEmpty: true })).toBe(true);
+      expect(canEditNote("14-05-2024", { noteIsEmpty: true })).toBe(false);
+    });
+
+    it("does not allow future days even when empty", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0));
+      expect(canEditNote("16-06-2024", { noteIsEmpty: true })).toBe(false);
+    });
+
+    it("returns false for invalid dates even when empty", () => {
+      expect(canEditNote("invalid", { noteIsEmpty: true })).toBe(false);
+    });
+  });
+});
+
+describe("isWithinBackfillWindow", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("includes yesterday and the day exactly one month ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0)); // June 15
+    expect(isWithinBackfillWindow("14-06-2024")).toBe(true);
+    expect(isWithinBackfillWindow("15-05-2024")).toBe(true);
+  });
+
+  it("excludes today, future, and days older than a month", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 5, 15, 12, 0, 0)); // June 15
+    expect(isWithinBackfillWindow("15-06-2024")).toBe(false);
+    expect(isWithinBackfillWindow("16-06-2024")).toBe(false);
+    expect(isWithinBackfillWindow("14-05-2024")).toBe(false);
+  });
+
+  it("clamps the cutoff at month ends", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 2, 31, 12, 0, 0)); // March 31, leap year
+    expect(isWithinBackfillWindow("29-02-2024")).toBe(true); // one "month" ago
+    expect(isWithinBackfillWindow("28-02-2024")).toBe(false);
+  });
+
+  it("returns false for invalid date strings", () => {
+    expect(isWithinBackfillWindow("invalid")).toBe(false);
+    expect(isWithinBackfillWindow("")).toBe(false);
   });
 });
 

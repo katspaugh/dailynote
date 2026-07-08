@@ -42,7 +42,14 @@ export function NoteEditor({
   onRestore,
   error,
 }: NoteEditorProps) {
-  const canEdit = canEditNote(date);
+  // Stored weather + backfill latch from note document via RxDB
+  const {
+    weather: storedWeather,
+    setWeather: setNoteWeather,
+    emptyNoteDate,
+  } = useNoteRepositoryContext();
+
+  const canEdit = canEditNote(date, { noteIsEmpty: emptyNoteDate === date });
   const isEditable = canEdit && !isDecrypting && isContentReady && !isSoftDeleted;
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const autoFocus = isEditable && !(isMobile && content.trim().length > 0);
@@ -74,9 +81,6 @@ export function NoteEditor({
   const { isDraggingImage, endImageDrag } = useImageDragState();
   const weather = useWeatherContext();
   const { state: weatherState } = weather;
-
-  // Stored weather from note document via RxDB
-  const { weather: storedWeather, setWeather: setNoteWeather } = useNoteRepositoryContext();
 
   // Push live weather into note for today's notes so it gets persisted
   const liveWeather = weatherState.dailyWeather;

@@ -17,6 +17,7 @@ import { useServiceContext } from "../contexts/serviceContext";
 import { SyncStatus } from "../types";
 import type { Note, SavedWeather } from "../types";
 import { reportError, onError } from "../utils/errorReporter";
+import { isContentEmpty } from "../utils/sanitize";
 
 interface UseNoteRepositoryProps {
   mode: AppMode;
@@ -49,6 +50,8 @@ export interface UseNoteRepositoryReturn {
   isContentReady: boolean;
   isOfflineStub: boolean;
   isSoftDeleted: boolean;
+  /** Date whose note had no content when first loaded (backfill latch). */
+  emptyNoteDate: string | null;
   restoreNote: () => void;
   noteError: RepositoryError | null;
   repositoryVersion: number;
@@ -89,6 +92,9 @@ export interface NoteRepoState {
   note: Note | null;
   noteLoading: boolean;
   noteError: RepositoryError | null;
+  // Date whose note had no content when it first loaded (backfill latch).
+  // Stays set while the user types so autosave doesn't lock the editor.
+  emptyNoteDate: string | null;
   // Weather
   weather: SavedWeather | null;
   // Local editing
@@ -110,7 +116,7 @@ export type NoteRepoAction =
   | { type: "REPLICATION_STARTED"; replication: ReplicationHandle }
   | { type: "REPLICATION_STOPPED" }
   | { type: "SYNC_STATUS"; status: SyncStatus; error?: string | null }
-  | { type: "NOTE_DOC_CHANGED"; note: Note | null; isSoftDeleted: boolean }
+  | { type: "NOTE_DOC_CHANGED"; note: Note | null; isSoftDeleted: boolean; noteIsEmpty: boolean }
   | { type: "NOTE_ERROR"; error: RepositoryError }
   | { type: "NOTE_DATES_CHANGED"; dates: Set<string> }
   | { type: "CONTENT_EDITED"; content: string }
@@ -138,6 +144,7 @@ const initialState: NoteRepoState = {
   note: null,
   noteLoading: true,
   noteError: null,
+  emptyNoteDate: null,
   weather: null,
   localContent: "",
   hasEdits: false,
@@ -182,6 +189,7 @@ export function noteRepoReducer(
           note: null,
           noteLoading: true,
           noteError: null,
+          emptyNoteDate: null,
         };
       }
 
@@ -256,6 +264,13 @@ export function noteRepoReducer(
         noteLoading: false,
         weather: action.note?.weather ?? null,
         isSoftDeleted: action.isSoftDeleted,
+        // Latch emptiness on the first load for this date only — later
+        // emissions reflect the user's own edits, not the stored note.
+        emptyNoteDate: state.noteLoading
+          ? action.noteIsEmpty
+            ? state.date
+            : null
+          : state.emptyNoteDate,
       };
       // Sync local content from note when not editing.
       // Keep previous content when note is null (re-subscribe / query initializing)
@@ -521,7 +536,7 @@ export function useNoteRepository({
       // When db is null we're still opening — keep noteLoading true so
       // isEditable stays false and auto-focus doesn't fire on empty content.
       if (state.db && !state.date) {
-        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: false });
+        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: false, noteIsEmpty: true });
       }
       return;
     }
@@ -541,9 +556,10 @@ export function useNoteRepository({
       lastIsDeleted = isDeleted;
 
       if (!doc) {
-        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: false });
+        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: false, noteIsEmpty: true });
       } else if (doc.isDeleted) {
-        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: true });
+        // Deleted notes are restorable, not backfillable
+        dispatch({ type: "NOTE_DOC_CHANGED", note: null, isSoftDeleted: true, noteIsEmpty: false });
       } else {
         dispatch({
           type: "NOTE_DOC_CHANGED",
@@ -554,6 +570,7 @@ export function useNoteRepository({
             weather: doc.weather ?? undefined,
           },
           isSoftDeleted: false,
+          noteIsEmpty: isContentEmpty(doc.content),
         });
       }
     });
@@ -756,6 +773,7 @@ export function useNoteRepository({
     isContentReady,
     isOfflineStub,
     isSoftDeleted: state.isSoftDeleted,
+    emptyNoteDate: state.emptyNoteDate,
     restoreNote,
     noteError: state.noteError,
     repositoryVersion: state.repositoryVersion,
