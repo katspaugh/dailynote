@@ -6,12 +6,17 @@
   gap: var(--spacing-sm);
 }
 
-/* Timeline: a rail down the left with one node per moment */
+/* Timeline: a rail down the left with one node per moment.
+   The rail is marginalia, so it hangs into half of the pane's own horizontal
+   padding (--editor-h-padding, set by DayViewLayout) rather than stacking the
+   gutter on top of it; that keeps the left edge from feeling heavier than the
+   right, especially on phones. */
 .timeline {
   position: relative;
-  --gutter: 48px;
-  --rail-inset: 26px;
+  --gutter: 56px;
+  --rail-inset: 34px;
   --node: 10px;
+  margin-left: calc(-0.5 * var(--editor-h-padding, var(--spacing-md)));
   padding-left: var(--gutter);
 }
 
