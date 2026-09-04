@@ -9,6 +9,7 @@ import { ErrorBoundary } from "../ErrorBoundary";
 import { NavigationArrow } from "../NavigationArrow";
 import { NoteEditor } from "../NoteEditor";
 import { NoteLogView } from "../NoteLog/NoteLogView";
+import { TimeScrubber } from "../TimeScrubber";
 import { MonthGrid } from "./MonthGrid";
 import { useOverscrollNavigation } from "../../hooks/useOverscrollNavigation";
 import { useKeyboardInset } from "../../hooks/useKeyboardInset";
@@ -171,6 +172,7 @@ export function DayViewLayout({
       )}
 
       <div className={styles.editorPane} ref={setEditorPaneEl}>
+        <TimeScrubber scrollContainer={editorPaneEl} />
         {selectedDate ? (
           <ErrorBoundary
             title="Note editor crashed"
