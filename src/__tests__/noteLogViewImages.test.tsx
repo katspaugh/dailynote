@@ -112,7 +112,7 @@ describe("NoteLogView image uploads", () => {
 
   it("inserts a picked image into the composer once uploaded", async () => {
     const upload = deferUpload("img-1");
-    const { editor, fileInput } = renderView();
+    const { editor, fileInput, getByLabelText } = renderView();
 
     pickFile(fileInput);
     expect(
@@ -121,8 +121,17 @@ describe("NoteLogView image uploads", () => {
 
     await act(async () => upload.resolve());
 
-    expect(editor.querySelector('img[data-image-id="img-1"]')).not.toBeNull();
+    const image = editor.querySelector('img[data-image-id="img-1"]');
+    expect(image).not.toBeNull();
     expect(editor.querySelector('img[data-image-id="uploading"]')).toBeNull();
+    // The composer is not part of `content`, so nothing resolves a URL for
+    // its images: the preview must stay as the src or the image shimmers.
+    expect(image?.getAttribute("src")).toBe("blob:preview");
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+    fireEvent.click(getByLabelText("Save entry"));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
   });
 
   it("keeps the composer intact while the photo picker hides the page", async () => {

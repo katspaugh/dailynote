@@ -93,6 +93,10 @@ export function NoteLogView({
   // so the entry stores the real image id instead of the placeholder.
   const pendingUploadsRef = useRef(0);
   const saveAfterUploadRef = useRef(false);
+  // Blob preview URLs of images currently shown in the composer. They stay
+  // alive until the entry is saved because the composer is not part of
+  // `content`, so nothing else resolves a URL for its images.
+  const previewUrlsRef = useRef<Set<string>>(new Set());
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
 
   // Header: date, weather, debug key
@@ -142,6 +146,13 @@ export function NoteLogView({
     return text.length > 0 || el.querySelector("img") !== null;
   }, []);
 
+  const releasePreviewUrls = useCallback(() => {
+    for (const url of previewUrlsRef.current) {
+      URL.revokeObjectURL(url);
+    }
+    previewUrlsRef.current.clear();
+  }, []);
+
   const saveCard = useCallback(() => {
     const el = editorRef.current;
     if (!el || !hasEditorContent()) return;
@@ -164,6 +175,7 @@ export function NoteLogView({
 
     // Clear editor
     el.textContent = "";
+    releasePreviewUrls();
     el.focus();
 
     // Clear auto-save timer
@@ -171,7 +183,7 @@ export function NoteLogView({
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
     }
-  }, [content, onChange, hasEditorContent]);
+  }, [content, onChange, hasEditorContent, releasePreviewUrls]);
 
   const resetAutoSaveTimer = useCallback(() => {
     if (autoSaveTimerRef.current) {
@@ -194,6 +206,7 @@ export function NoteLogView({
   // route silently drops the input since the editor only commits on save.
   useEffect(() => {
     if (readOnly) return;
+    const previewUrls = previewUrlsRef.current;
     const saveIfHidden = () => {
       if (document.visibilityState !== "hidden") {
         pickerOpenRef.current = false;
@@ -217,6 +230,10 @@ export function NoteLogView({
         clearTimeout(autoSaveTimerRef.current);
       }
       savePending();
+      for (const url of previewUrls) {
+        URL.revokeObjectURL(url);
+      }
+      previewUrls.clear();
     };
   }, [readOnly]);
 
@@ -314,6 +331,7 @@ export function NoteLogView({
       placeholder.setAttribute("data-image-id", "uploading");
       placeholder.setAttribute("alt", "Uploading...");
       const previewUrl = URL.createObjectURL(file);
+      previewUrlsRef.current.add(previewUrl);
       placeholder.setAttribute("src", previewUrl);
       insertNodeAtCursor(placeholder);
       handleInput();
@@ -321,21 +339,21 @@ export function NoteLogView({
       pendingUploadsRef.current += 1;
       onImageDrop(file)
         .then(({ id, width, height, filename }) => {
-          const finalImage = document.createElement("img");
-          finalImage.setAttribute("data-image-id", id);
-          finalImage.setAttribute("alt", filename);
-          finalImage.setAttribute("width", String(width));
-          finalImage.setAttribute("height", String(height));
-          if (placeholder.isConnected) {
-            placeholder.replaceWith(finalImage);
-          }
+          // Promote the placeholder in place, keeping the preview as its src.
+          // An <img> with an id but no src shows the loading shimmer, and the
+          // composer's images are only resolved once the entry is saved.
+          placeholder.setAttribute("data-image-id", id);
+          placeholder.setAttribute("alt", filename);
+          placeholder.setAttribute("width", String(width));
+          placeholder.setAttribute("height", String(height));
         })
         .catch((error) => {
           console.error("Failed to upload image:", error);
           placeholder.remove();
+          previewUrlsRef.current.delete(previewUrl);
+          URL.revokeObjectURL(previewUrl);
         })
         .finally(() => {
-          URL.revokeObjectURL(previewUrl);
           handleInput();
           pendingUploadsRef.current -= 1;
           if (pendingUploadsRef.current === 0 && saveAfterUploadRef.current) {
