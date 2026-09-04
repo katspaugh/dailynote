@@ -20,6 +20,7 @@ import { useDebugNoteKeyId } from "../../hooks/useDebugNoteKeyId";
 import { useShareTarget } from "../../hooks/useShareTarget";
 import { applySectionColors } from "../../services/sectionColors";
 import { LogEntry } from "./LogEntry";
+import { TimeLabel } from "./TimeLabel";
 import { useSectionTransform } from "./useSectionTransform";
 import contentStyles from "../../styles/noteContent.module.css";
 import styles from "./NoteLogView.module.css";
@@ -414,7 +415,9 @@ export function NoteLogView({
           <div className={styles.composer} data-moment-time="now">
             <span className={styles.composerNode} aria-hidden="true" />
             <span className={styles.composerTime}>
-              {formatTimestampLabel(new Date().toISOString())}
+              <TimeLabel
+                label={formatTimestampLabel(new Date().toISOString())}
+              />
             </span>
             <div className={styles.composerBox}>
               <div

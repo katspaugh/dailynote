@@ -9,9 +9,9 @@
 /* Timeline: a rail down the left with one node per moment */
 .timeline {
   position: relative;
-  --gutter: 96px;
-  --rail-inset: 22px;
-  --node: 12px;
+  --gutter: 48px;
+  --rail-inset: 26px;
+  --node: 10px;
   padding-left: var(--gutter);
 }
 
@@ -29,7 +29,7 @@
 /* Composer: the open node at the top of the rail */
 .composer {
   position: relative;
-  padding: 4px 0 30px;
+  padding: 4px 0 34px;
 }
 
 .composerNode {
@@ -59,13 +59,18 @@
   }
 }
 
+/* Time hangs under the node, centred on the rail and masking it */
 .composerTime {
   position: absolute;
-  left: calc(-1 * var(--gutter));
-  width: calc(var(--gutter) - var(--rail-inset) - 18px);
-  top: 8px;
-  text-align: right;
-  font-size: var(--font-size-xs);
+  left: calc(-1 * var(--rail-inset) + 1px);
+  top: 28px;
+  transform: translateX(-50%);
+  padding: 2px 3px;
+  border-radius: 3px;
+  background: var(--color-surface);
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1;
   font-weight: 600;
   color: var(--color-primary);
   font-variant-numeric: tabular-nums;
@@ -194,11 +199,6 @@
 }
 
 @media (max-width: 768px) {
-  .timeline {
-    --gutter: 78px;
-    --rail-inset: 18px;
-  }
-
   .composerBox {
     padding-right: 48px;
   }

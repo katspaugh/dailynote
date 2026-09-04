@@ -1,7 +1,7 @@
 /* One moment on the rail. Inherits --gutter, --rail-inset, --node from .timeline. */
 .card {
   position: relative;
-  padding: 4px 0 26px;
+  padding: 4px 0 30px;
   border-radius: var(--radius-sm);
 }
 
@@ -41,17 +41,21 @@
   }
 }
 
+/* Time hangs under the node, centred on the rail and masking it */
 .timestamp {
   position: absolute;
-  left: calc(-1 * var(--gutter));
-  width: calc(var(--gutter) - var(--rail-inset) - 18px);
-  top: 8px;
-  text-align: right;
-  font-size: var(--font-size-xs);
+  left: calc(-1 * var(--rail-inset) + 1px);
+  top: 27px;
+  transform: translateX(-50%);
+  padding: 2px 3px;
+  border-radius: 3px;
+  background: var(--color-surface);
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1;
   font-weight: 600;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 

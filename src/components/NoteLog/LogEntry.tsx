@@ -5,6 +5,7 @@ import { applySectionColors } from "../../services/sectionColors";
 import { sanitizeHtml } from "../../utils/sanitize";
 import contentStyles from "../../styles/noteContent.module.css";
 import { useSectionTransform } from "./useSectionTransform";
+import { TimeLabel } from "./TimeLabel";
 import styles from "./LogEntry.module.css";
 
 interface LogEntryProps {
@@ -149,7 +150,11 @@ export function LogEntry({
       data-hue-slot={hueSlot ?? undefined}
     >
       <span className={styles.node} aria-hidden="true" />
-      {label && <div className={styles.timestamp}>{label}</div>}
+      {label && (
+        <div className={styles.timestamp}>
+          <TimeLabel label={label} />
+        </div>
+      )}
       <div
         ref={editorRef}
         className={`${contentStyles.content} ${styles.cardContent}`}
