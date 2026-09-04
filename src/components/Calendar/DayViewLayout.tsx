@@ -14,6 +14,8 @@ import { MonthGrid } from "./MonthGrid";
 import { useOverscrollNavigation } from "../../hooks/useOverscrollNavigation";
 import { useKeyboardInset } from "../../hooks/useKeyboardInset";
 import { getMonthName, isToday } from "../../utils/date";
+import { canEditNote } from "../../utils/noteRules";
+import { useNoteRepositoryContext } from "../../contexts/noteRepositoryContext";
 
 import styles from "./DayViewLayout.module.css";
 
@@ -74,6 +76,19 @@ export function DayViewLayout({
 }: DayViewLayoutProps) {
   const [editorPaneEl, setEditorPaneEl] = useState<HTMLDivElement | null>(null);
   useKeyboardInset();
+
+  // Today and read-only past days share the timeline. Past days that are
+  // still editable (backfill window, late-night yesterday) keep the free-form
+  // editor, as do notes that need its status handling.
+  const { emptyNoteDate } = useNoteRepositoryContext();
+  const selectedIsToday = selectedDate ? isToday(selectedDate) : false;
+  const selectedCanEdit = selectedDate
+    ? canEditNote(selectedDate, { noteIsEmpty: emptyNoteDate === selectedDate })
+    : false;
+  const showTimeline =
+    !!selectedDate &&
+    !isSoftDeleted &&
+    (selectedIsToday || (!selectedCanEdit && !isOfflineStub && !noteError));
 
   useOverscrollNavigation(editorPaneEl, {
     onOverscrollUp: canNavigatePrev ? onNavigatePrev : undefined,
@@ -157,7 +172,6 @@ export function DayViewLayout({
               ariaLabel="Next note"
             />
           </div>
-
         </div>
       )}
 
@@ -179,13 +193,14 @@ export function DayViewLayout({
             description="You can select another date or refresh the page."
             resetLabel="Reload editor"
           >
-            {isToday(selectedDate) && !isSoftDeleted ? (
+            {showTimeline ? (
               <NoteLogView
                 date={selectedDate}
                 content={content}
                 onChange={onChange}
                 isContentReady={isContentReady}
                 isDecrypting={isDecrypting}
+                readOnly={!selectedIsToday}
               />
             ) : (
               <NoteEditor

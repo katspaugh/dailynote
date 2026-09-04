@@ -24,6 +24,10 @@ vi.mock("../contexts/noteRepositoryContext", () => ({
   useNoteRepositoryContext: () => ({ imageRepository, weather: null }),
 }));
 
+vi.mock("../contexts/routingContext", () => ({
+  useRoutingContext: () => ({ navigateToDate: vi.fn() }),
+}));
+
 vi.mock("../utils/imageCompression", () => ({
   compressImage: vi.fn(async (file: File) => ({
     blob: file,

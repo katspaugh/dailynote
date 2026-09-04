@@ -16,6 +16,8 @@ interface LogEntryProps {
   onDelete?: () => void;
   focusTargetRef?: RefObject<string | null>;
   justSaved?: boolean;
+  /** Past days: render on the rail without editing. */
+  readOnly?: boolean;
 }
 
 function serializeContent(el: HTMLElement): string {
@@ -51,6 +53,7 @@ export function LogEntry({
   onDelete,
   focusTargetRef,
   justSaved,
+  readOnly = false,
 }: LogEntryProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const isEditingRef = useRef(false);
@@ -150,15 +153,17 @@ export function LogEntry({
       <div
         ref={editorRef}
         className={`${contentStyles.content} ${styles.cardContent}`}
-        contentEditable
+        contentEditable={!readOnly}
         suppressContentEditableWarning
-        onClick={handleStartEdit}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        onInput={handleInput}
+        onClick={readOnly ? undefined : handleStartEdit}
+        onKeyDown={readOnly ? undefined : handleKeyDown}
+        onBlur={readOnly ? undefined : handleBlur}
+        onInput={readOnly ? undefined : handleInput}
         dangerouslySetInnerHTML={{ __html: sanitized }}
         role="textbox"
         aria-multiline="true"
+        aria-readonly={readOnly || undefined}
+        data-readonly={readOnly || undefined}
       />
     </div>
   );

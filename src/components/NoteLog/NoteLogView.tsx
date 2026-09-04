@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { Check, ImagePlus } from "lucide-react";
-import {
-  parseNoteSegments,
-  assembleSegments,
-} from "../../utils/noteSegments";
+import { parseNoteSegments, assembleSegments } from "../../utils/noteSegments";
 import { applyTextTransforms } from "../../services/editorTextTransforms";
 import {
   formatTimestampLabel,
   getTimestampLabel,
 } from "../../services/timestampLabel";
-import { formatDateDisplay, isToday } from "../../utils/date";
+import { formatDateDisplay, getTodayString, isToday } from "../../utils/date";
+import { useRoutingContext } from "../../contexts/routingContext";
 import { useWeatherContext } from "../../contexts/weatherContext";
 import { useNoteRepositoryContext } from "../../contexts/noteRepositoryContext";
 import {
@@ -35,6 +33,8 @@ interface NoteLogViewProps {
   onChange: (content: string) => void;
   isContentReady: boolean;
   isDecrypting?: boolean;
+  /** Past days: show the timeline without the composer or editing. */
+  readOnly?: boolean;
 }
 
 function serializeContent(el: HTMLElement): string {
@@ -79,6 +79,7 @@ export function NoteLogView({
   onChange,
   isContentReady,
   isDecrypting = false,
+  readOnly = false,
 }: NoteLogViewProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +98,10 @@ export function NoteLogView({
   // Header: date, weather, debug key
   const formattedDate = formatDateDisplay(date);
   const debugKeyId = useDebugNoteKeyId(date, isContentReady);
+  const { navigateToDate } = useRoutingContext();
+  const handleJumpToToday = useCallback(() => {
+    navigateToDate(getTodayString());
+  }, [navigateToDate]);
   const weather = useWeatherContext();
   const { state: weatherState } = weather;
   const { weather: storedWeather } = useNoteRepositoryContext();
@@ -115,7 +120,10 @@ export function NoteLogView({
   }, [displayWeather, weather]);
 
   // Image upload
-  const { onImageDrop } = useInlineImageUpload({ date, isEditable: true });
+  const { onImageDrop } = useInlineImageUpload({
+    date,
+    isEditable: !readOnly,
+  });
 
   useInlineImageUrls({ date, content, editorRef: containerRef });
 
@@ -185,6 +193,7 @@ export function NoteLogView({
   // Without this, typing in the new-entry card and clicking the logo or another
   // route silently drops the input since the editor only commits on save.
   useEffect(() => {
+    if (readOnly) return;
     const saveIfHidden = () => {
       if (document.visibilityState !== "hidden") {
         pickerOpenRef.current = false;
@@ -209,7 +218,7 @@ export function NoteLogView({
       }
       savePending();
     };
-  }, []);
+  }, [readOnly]);
 
   const handleInput = useCallback(() => {
     const el = editorRef.current;
@@ -235,6 +244,7 @@ export function NoteLogView({
 
   // Focus editor on 'n' key when not typing
   useEffect(() => {
+    if (readOnly) return;
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === "n" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         const active = document.activeElement;
@@ -251,14 +261,15 @@ export function NoteLogView({
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  }, [readOnly]);
 
   // Auto-focus editor on mount
   useEffect(() => {
+    if (readOnly) return;
     if (isContentReady && !isDecrypting) {
       editorRef.current?.focus();
     }
-  }, [isContentReady, isDecrypting]);
+  }, [isContentReady, isDecrypting, readOnly]);
 
   const handleEntrySave = useCallback(
     (segmentId: string, newHtml: string) => {
@@ -373,62 +384,69 @@ export function NoteLogView({
       <NoteEditorHeader
         date={date}
         formattedDate={formattedDate}
-        showReadonlyBadge={false}
+        showReadonlyBadge={readOnly}
+        onJumpToToday={readOnly ? handleJumpToToday : undefined}
         statusText={isDecrypting ? "Decrypting..." : null}
         weatherLabel={weatherLabel}
         debugKeyId={debugKeyId}
       />
 
       <div className={styles.timeline}>
-        <div className={styles.composer} data-moment-time="now">
-          <span className={styles.composerNode} aria-hidden="true" />
-          <span className={styles.composerTime}>
-            {formatTimestampLabel(new Date().toISOString())}
-          </span>
-          <div className={styles.composerBox}>
-            <div
-              ref={editorRef}
-              className={`${contentStyles.content} ${styles.editor}`}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={handleInput}
-              onKeyDown={handleKeyDown}
-              role="textbox"
-              aria-multiline="true"
-              aria-label="New entry"
-              data-placeholder="What's on your mind?"
-            />
-            {onImageDrop && (
-              <div className={styles.composerTools}>
-                <button
-                  type="button"
-                  className={styles.toolButton}
-                  onClick={openFilePicker}
-                  aria-label="Insert image"
-                  title="Insert image"
-                >
-                  <ImagePlus size={16} />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className={styles.imageInput}
-                  onChange={handleFileChange}
-                />
-              </div>
-            )}
-            <button
-              type="button"
-              className={styles.saveButton}
-              onClick={saveCard}
-              aria-label="Save entry"
-              title="Save entry (⌘⏎)"
-            >
-              <Check size={16} strokeWidth={2.6} />
-            </button>
+        {!readOnly && (
+          <div className={styles.composer} data-moment-time="now">
+            <span className={styles.composerNode} aria-hidden="true" />
+            <span className={styles.composerTime}>
+              {formatTimestampLabel(new Date().toISOString())}
+            </span>
+            <div className={styles.composerBox}>
+              <div
+                ref={editorRef}
+                className={`${contentStyles.content} ${styles.editor}`}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleInput}
+                onKeyDown={handleKeyDown}
+                role="textbox"
+                aria-multiline="true"
+                aria-label="New entry"
+                data-placeholder="What's on your mind?"
+              />
+              {onImageDrop && (
+                <div className={styles.composerTools}>
+                  <button
+                    type="button"
+                    className={styles.toolButton}
+                    onClick={openFilePicker}
+                    aria-label="Insert image"
+                    title="Insert image"
+                  >
+                    <ImagePlus size={16} />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className={styles.imageInput}
+                    onChange={handleFileChange}
+                  />
+                </div>
+              )}
+              <button
+                type="button"
+                className={styles.saveButton}
+                onClick={saveCard}
+                aria-label="Save entry"
+                title="Save entry (⌘⏎)"
+              >
+                <Check size={16} strokeWidth={2.6} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {readOnly && displaySegments.length === 0 && (
+          <div className={styles.emptyState}>Nothing written on this day.</div>
+        )}
 
         {displaySegments.length > 0 && (
           <div className={styles.stack}>
@@ -441,12 +459,13 @@ export function NoteLogView({
                 html={segment.html}
                 onSave={(html) => handleEntrySave(segment.id, html)}
                 onDelete={
-                  segments.length > 1
+                  !readOnly && segments.length > 1
                     ? () => handleEntryDelete(segment.id)
                     : undefined
                 }
                 focusTargetRef={focusTargetRef}
                 justSaved={justSavedId === segment.id}
+                readOnly={readOnly}
               />
             ))}
           </div>

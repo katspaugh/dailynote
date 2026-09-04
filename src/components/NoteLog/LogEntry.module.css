@@ -64,6 +64,11 @@
   outline: none;
 }
 
+.cardContent[data-readonly] {
+  cursor: default;
+  user-select: text;
+}
+
 .card[data-just-saved] {
   animation: card-blink 0.7s ease-out;
 }
