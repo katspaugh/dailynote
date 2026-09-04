@@ -134,12 +134,19 @@ export function LogEntry({
   // React reconciliation (DOM mutations from useEffect get overwritten).
   // Content is already sanitized by sanitizeHtml before being set on the
   // temporary element, so this is safe from XSS.
-  const { sanitized, hueSlot } = useMemo(() => {
+  // React 19 diffs dangerouslySetInnerHTML by object identity, so the
+  // {__html} object must be stable across renders: a fresh object would reset
+  // innerHTML on every re-render and drop the blob src that useInlineImageUrls
+  // sets on <img data-image-id> elements, leaving them on the loading shimmer.
+  const { innerHtml, hueSlot } = useMemo(() => {
     const clean = sanitizeHtml(html);
     const tmp = document.createElement("div");
     tmp.innerHTML = clean; // safe: already sanitized above
     applySectionColors(tmp);
-    return { sanitized: tmp.innerHTML, hueSlot: firstSectionHueSlot(tmp) };
+    return {
+      innerHtml: { __html: tmp.innerHTML },
+      hueSlot: firstSectionHueSlot(tmp),
+    };
   }, [html]);
 
   return (
@@ -164,7 +171,7 @@ export function LogEntry({
         onKeyDown={readOnly ? undefined : handleKeyDown}
         onBlur={readOnly ? undefined : handleBlur}
         onInput={readOnly ? undefined : handleInput}
-        dangerouslySetInnerHTML={{ __html: sanitized }}
+        dangerouslySetInnerHTML={innerHtml}
         role="textbox"
         aria-multiline="true"
         aria-readonly={readOnly || undefined}

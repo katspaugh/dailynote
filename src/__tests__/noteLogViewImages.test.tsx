@@ -191,6 +191,42 @@ describe("NoteLogView image uploads", () => {
     expect(editor.querySelector("img")).toBeNull();
   });
 
+  it("keeps a saved entry's resolved image across unrelated re-renders", async () => {
+    imageRepository.get.mockResolvedValueOnce(
+      ok(new Blob(["img"], { type: "image/jpeg" })),
+    );
+    const content =
+      '<hr data-timestamp="2026-09-04T10:00:00.000Z" contenteditable="false">' +
+      'hello<img data-image-id="img-saved" alt="p.jpg" width="10" height="10">';
+    const { container, rerender } = render(
+      <NoteLogView
+        date={getTodayString()}
+        content={content}
+        onChange={vi.fn()}
+        isContentReady={true}
+      />,
+    );
+
+    const image = () =>
+      container.querySelector('img[data-image-id="img-saved"]');
+    await waitFor(() => {
+      expect(image()?.getAttribute("src")).toBe("blob:preview");
+    });
+
+    // A parent re-render with the same content (e.g. a new onChange identity,
+    // a sync status tick) must not rewrite the entry's DOM and lose the src.
+    rerender(
+      <NoteLogView
+        date={getTodayString()}
+        content={content}
+        onChange={vi.fn()}
+        isContentReady={true}
+      />,
+    );
+
+    expect(image()?.getAttribute("src")).toBe("blob:preview");
+  });
+
   it("inserts photos shared to the app via the share target", async () => {
     const upload = deferUpload("img-shared");
     window.history.replaceState({}, "", "/?share-target");
