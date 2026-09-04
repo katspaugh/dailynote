@@ -19,6 +19,7 @@ import {
 } from "../NoteEditor/useInlineImages";
 import { NoteEditorHeader } from "../NoteEditor/NoteEditorHeader";
 import { useDebugNoteKeyId } from "../../hooks/useDebugNoteKeyId";
+import { useShareTarget } from "../../hooks/useShareTarget";
 import { applySectionColors } from "../../services/sectionColors";
 import { LogEntry } from "./LogEntry";
 import { useSectionTransform } from "./useSectionTransform";
@@ -83,6 +84,14 @@ export function NoteLogView({
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True while the native file picker is open. On mobile the picker (or the
+  // camera) backgrounds the page, which must not commit and clear the composer
+  // the user is about to insert a photo into.
+  const pickerOpenRef = useRef(false);
+  // Uploads still in flight; a save requested meanwhile runs when they finish
+  // so the entry stores the real image id instead of the placeholder.
+  const pendingUploadsRef = useRef(0);
+  const saveAfterUploadRef = useRef(false);
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
 
   // Header: date, weather, debug key
@@ -129,6 +138,11 @@ export function NoteLogView({
     const el = editorRef.current;
     if (!el || !hasEditorContent()) return;
 
+    if (pendingUploadsRef.current > 0) {
+      saveAfterUploadRef.current = true;
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     const label = getTimestampLabel(timestamp);
     const labelAttr = label ? ` data-label="${label}"` : "";
@@ -172,14 +186,24 @@ export function NoteLogView({
   // route silently drops the input since the editor only commits on save.
   useEffect(() => {
     const saveIfHidden = () => {
-      if (document.visibilityState === "hidden") saveCardRef.current();
+      if (document.visibilityState !== "hidden") {
+        pickerOpenRef.current = false;
+        return;
+      }
+      if (pickerOpenRef.current) return;
+      saveCardRef.current();
     };
     const savePending = () => saveCardRef.current();
+    const pickerClosed = () => {
+      pickerOpenRef.current = false;
+    };
     document.addEventListener("visibilitychange", saveIfHidden);
     window.addEventListener("pagehide", savePending);
+    window.addEventListener("focus", pickerClosed);
     return () => {
       document.removeEventListener("visibilitychange", saveIfHidden);
       window.removeEventListener("pagehide", savePending);
+      window.removeEventListener("focus", pickerClosed);
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
@@ -283,6 +307,7 @@ export function NoteLogView({
       insertNodeAtCursor(placeholder);
       handleInput();
 
+      pendingUploadsRef.current += 1;
       onImageDrop(file)
         .then(({ id, width, height, filename }) => {
           const finalImage = document.createElement("img");
@@ -301,18 +326,36 @@ export function NoteLogView({
         .finally(() => {
           URL.revokeObjectURL(previewUrl);
           handleInput();
+          pendingUploadsRef.current -= 1;
+          if (pendingUploadsRef.current === 0 && saveAfterUploadRef.current) {
+            saveAfterUploadRef.current = false;
+            saveCardRef.current();
+          }
         });
     },
     [onImageDrop, handleInput],
   );
 
+  const openFilePicker = useCallback(() => {
+    pickerOpenRef.current = true;
+    fileInputRef.current?.click();
+  }, []);
+
   const handleFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
+      pickerOpenRef.current = false;
       const file = event.target.files?.[0];
       if (file) handleImageFile(file);
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
     [handleImageFile],
+  );
+
+  // Photos shared to the app via the Web Share Target API land on today's
+  // note, which is this view.
+  useShareTarget(
+    onImageDrop ? handleImageFile : undefined,
+    isContentReady && !isDecrypting,
   );
 
   if (!isContentReady) return null;
@@ -360,7 +403,7 @@ export function NoteLogView({
                 <button
                   type="button"
                   className={styles.toolButton}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openFilePicker}
                   aria-label="Insert image"
                   title="Insert image"
                 >
