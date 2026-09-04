@@ -1,20 +1,57 @@
+/* One moment on the rail. Inherits --gutter, --rail-inset, --node from .timeline. */
 .card {
   position: relative;
-  border-top: 1px solid var(--color-border);
-  padding: var(--spacing-lg) 0;
+  padding: 4px 0 26px;
+  border-radius: var(--radius-sm);
+}
+
+.node {
+  position: absolute;
+  left: calc(-1 * var(--rail-inset) - var(--node) / 2 + 1px);
+  top: 12px;
+  width: var(--node);
+  height: var(--node);
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2.5px solid var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-surface);
+}
+
+/* A section's hue tints its node, so moment kinds read along the rail */
+.card[data-hue-slot="0"] { --node-hue: 0; }
+.card[data-hue-slot="1"] { --node-hue: 45; }
+.card[data-hue-slot="2"] { --node-hue: 90; }
+.card[data-hue-slot="3"] { --node-hue: 135; }
+.card[data-hue-slot="4"] { --node-hue: 180; }
+.card[data-hue-slot="5"] { --node-hue: 225; }
+.card[data-hue-slot="6"] { --node-hue: 270; }
+.card[data-hue-slot="7"] { --node-hue: 315; }
+
+.card[data-hue-slot] .node {
+  border-color: hsl(var(--node-hue) 40% 45%);
+}
+
+:root[data-theme="dark"] .card[data-hue-slot] .node {
+  border-color: hsl(var(--node-hue) 50% 65%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card[data-hue-slot] .node {
+    border-color: hsl(var(--node-hue) 50% 65%);
+  }
 }
 
 .timestamp {
   position: absolute;
-  top: -10px;
-  right: 0;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  left: calc(-1 * var(--gutter));
+  width: calc(var(--gutter) - var(--rail-inset) - 18px);
+  top: 8px;
+  text-align: right;
   font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -28,15 +65,12 @@
 }
 
 .card[data-just-saved] {
-  animation: card-blink 0.6s ease;
+  animation: card-blink 0.7s ease-out;
 }
 
 @keyframes card-blink {
   0% {
-    background-color: transparent;
-  }
-  30% {
-    background-color: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
   100% {
     background-color: transparent;

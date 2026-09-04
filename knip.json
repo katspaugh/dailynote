@@ -1,8 +1,20 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["scripts/*.mjs"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["src/stubs/pwaRegister.ts"],
-  "ignoreDependencies": ["@playwright/mcp", "supabase", "prettier", "@types/dompurify"],
-  "exclude": ["exports", "types"]
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "vite*.ts"
+  ],
+  "ignore": [
+    "src/stubs/pwaRegister.ts"
+  ],
+  "ignoreDependencies": [
+    "@playwright/mcp",
+    "supabase",
+    "prettier",
+    "@types/dompurify"
+  ],
+  "exclude": [
+    "exports",
+    "types"
+  ]
 }

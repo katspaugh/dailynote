@@ -6,7 +6,10 @@ import {
   assembleSegments,
 } from "../../utils/noteSegments";
 import { applyTextTransforms } from "../../services/editorTextTransforms";
-import { getTimestampLabel } from "../../services/timestampLabel";
+import {
+  formatTimestampLabel,
+  getTimestampLabel,
+} from "../../services/timestampLabel";
 import { formatDateDisplay, isToday } from "../../utils/date";
 import { useWeatherContext } from "../../contexts/weatherContext";
 import { useNoteRepositoryContext } from "../../contexts/noteRepositoryContext";
@@ -333,72 +336,81 @@ export function NoteLogView({
         debugKeyId={debugKeyId}
       />
 
-      <div className={styles.topCard}>
-        <div
-          ref={editorRef}
-          className={`${contentStyles.content} ${styles.editor}`}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          role="textbox"
-          aria-multiline="true"
-          aria-label="New entry"
-          data-placeholder="What's on your mind?"
-        />
-        <button
-          type="button"
-          className={styles.saveButton}
-          onClick={saveCard}
-          aria-label="Save entry"
-          title="Save entry"
-        >
-          <Check size={18} />
-        </button>
-      </div>
-
-      {displaySegments.length > 0 && (
-        <div className={styles.stack}>
-          {displaySegments.map((segment) => (
-            <LogEntry
-              key={segment.id}
-              id={segment.id}
-              timestamp={segment.timestamp}
-              label={segment.label}
-              html={segment.html}
-              onSave={(html) => handleEntrySave(segment.id, html)}
-              onDelete={
-                segments.length > 1
-                  ? () => handleEntryDelete(segment.id)
-                  : undefined
-              }
-              focusTargetRef={focusTargetRef}
-              justSaved={justSavedId === segment.id}
+      <div className={styles.timeline}>
+        <div className={styles.composer} data-moment-time="now">
+          <span className={styles.composerNode} aria-hidden="true" />
+          <span className={styles.composerTime}>
+            {formatTimestampLabel(new Date().toISOString())}
+          </span>
+          <div className={styles.composerBox}>
+            <div
+              ref={editorRef}
+              className={`${contentStyles.content} ${styles.editor}`}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleInput}
+              onKeyDown={handleKeyDown}
+              role="textbox"
+              aria-multiline="true"
+              aria-label="New entry"
+              data-placeholder="What's on your mind?"
             />
-          ))}
+            {onImageDrop && (
+              <div className={styles.composerTools}>
+                <button
+                  type="button"
+                  className={styles.toolButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Insert image"
+                  title="Insert image"
+                >
+                  <ImagePlus size={16} />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className={styles.imageInput}
+                  onChange={handleFileChange}
+                />
+              </div>
+            )}
+            <button
+              type="button"
+              className={styles.saveButton}
+              onClick={saveCard}
+              aria-label="Save entry"
+              title="Save entry (⌘⏎)"
+            >
+              <Check size={16} strokeWidth={2.6} />
+            </button>
+          </div>
         </div>
-      )}
 
-      {onImageDrop && (
-        <div className={styles.toolbar}>
-          <button
-            type="button"
-            className={styles.toolbarButton}
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Insert image"
-            title="Insert image"
-          >
-            <ImagePlus size={18} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className={styles.imageInput}
-            onChange={handleFileChange}
-          />
-        </div>
-      )}
+        {displaySegments.length > 0 && (
+          <div className={styles.stack}>
+            {displaySegments.map((segment) => (
+              <LogEntry
+                key={segment.id}
+                id={segment.id}
+                timestamp={segment.timestamp}
+                label={segment.label}
+                html={segment.html}
+                onSave={(html) => handleEntrySave(segment.id, html)}
+                onDelete={
+                  segments.length > 1
+                    ? () => handleEntryDelete(segment.id)
+                    : undefined
+                }
+                focusTargetRef={focusTargetRef}
+                justSaved={justSavedId === segment.id}
+              />
+            ))}
+          </div>
+        )}
+
+        <span className={styles.railEnd} aria-hidden="true" />
+      </div>
     </div>
   );
 }

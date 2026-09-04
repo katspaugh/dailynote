@@ -32,8 +32,19 @@ function serializeContent(el: HTMLElement): string {
   return clone.innerHTML;
 }
 
+const HUE_CLASS_RE = /section-hue-(\d)/;
+
+/** Hue slot of the first section in the entry, used to tint its rail node. */
+function firstSectionHueSlot(root: HTMLElement): string | null {
+  const header = root.querySelector<HTMLElement>("[data-section-type]");
+  if (!header) return null;
+  const match = HUE_CLASS_RE.exec(header.className);
+  return match ? match[1] : null;
+}
+
 export function LogEntry({
   id,
+  timestamp,
   label,
   html,
   onSave,
@@ -119,16 +130,22 @@ export function LogEntry({
   // React reconciliation (DOM mutations from useEffect get overwritten).
   // Content is already sanitized by sanitizeHtml before being set on the
   // temporary element, so this is safe from XSS.
-  const sanitized = useMemo(() => {
+  const { sanitized, hueSlot } = useMemo(() => {
     const clean = sanitizeHtml(html);
     const tmp = document.createElement("div");
     tmp.innerHTML = clean; // safe: already sanitized above
     applySectionColors(tmp);
-    return tmp.innerHTML;
+    return { sanitized: tmp.innerHTML, hueSlot: firstSectionHueSlot(tmp) };
   }, [html]);
 
   return (
-    <div className={styles.card} data-just-saved={justSaved || undefined}>
+    <div
+      className={styles.card}
+      data-just-saved={justSaved || undefined}
+      data-moment-time={timestamp ?? undefined}
+      data-hue-slot={hueSlot ?? undefined}
+    >
+      <span className={styles.node} aria-hidden="true" />
       {label && <div className={styles.timestamp}>{label}</div>}
       <div
         ref={editorRef}
