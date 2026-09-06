@@ -16,6 +16,7 @@ import { AppMode } from "./useAppMode";
 import { useServiceContext } from "../contexts/serviceContext";
 import { SyncStatus } from "../types";
 import type { Note, SavedWeather } from "../types";
+import type { NoteSections } from "../utils/habits";
 import { reportError, onError } from "../utils/errorReporter";
 import { isContentEmpty } from "../utils/sanitize";
 
@@ -45,6 +46,8 @@ export interface UseNoteRepositoryReturn {
   isSaving: boolean;
   hasNote: (date: string) => boolean;
   noteDates: Set<string>;
+  /** Section types per note date for the current year (habit tracking). */
+  noteSections: NoteSections;
   refreshNoteDates: (options?: { immediate?: boolean }) => void;
   isDecrypting: boolean;
   isContentReady: boolean;
@@ -101,8 +104,9 @@ export interface NoteRepoState {
   localContent: string;
   hasEdits: boolean;
   isSaving: boolean;
-  // Note dates
+  // Note dates (+ the section types each note carries)
   noteDates: Set<string>;
+  noteSections: NoteSections;
   // Soft delete
   isSoftDeleted: boolean;
   // Version
@@ -118,7 +122,7 @@ export type NoteRepoAction =
   | { type: "SYNC_STATUS"; status: SyncStatus; error?: string | null }
   | { type: "NOTE_DOC_CHANGED"; note: Note | null; isSoftDeleted: boolean; noteIsEmpty: boolean }
   | { type: "NOTE_ERROR"; error: RepositoryError }
-  | { type: "NOTE_DATES_CHANGED"; dates: Set<string> }
+  | { type: "NOTE_DATES_CHANGED"; dates: Set<string>; sections: NoteSections }
   | { type: "CONTENT_EDITED"; content: string }
   | { type: "SAVE_STARTED" }
   | { type: "SAVE_COMPLETED"; error?: RepositoryError | null }
@@ -150,6 +154,7 @@ const initialState: NoteRepoState = {
   hasEdits: false,
   isSaving: false,
   noteDates: new Set(),
+  noteSections: new Map(),
   isSoftDeleted: false,
   repositoryVersion: 0,
 };
@@ -206,6 +211,7 @@ export function noteRepoReducer(
           syncStatus: SyncStatus.Idle,
           syncError: null,
           noteDates: new Set(),
+          noteSections: new Map(),
         };
       }
 
@@ -287,7 +293,7 @@ export function noteRepoReducer(
       return { ...state, noteError: action.error };
 
     case "NOTE_DATES_CHANGED":
-      return { ...state, noteDates: action.dates };
+      return { ...state, noteDates: action.dates, noteSections: action.sections };
 
     case "CONTENT_EDITED":
       return { ...state, localContent: action.content, hasEdits: true };
@@ -581,18 +587,23 @@ export function useNoteRepository({
   // --- Effect 5: Subscribe to note dates ---
   useEffect(() => {
     if (!state.db) {
-      dispatch({ type: "NOTE_DATES_CHANGED", dates: new Set() });
+      dispatch({ type: "NOTE_DATES_CHANGED", dates: new Set(), sections: new Map() });
       return;
     }
 
     const subscription = state.db.notes
       .find({ selector: { isDeleted: { $eq: false } } })
       .$.subscribe((docs) => {
-        const yearStr = String(state.year);
-        const filtered = docs
-          .map((doc) => doc.date)
-          .filter((d) => d.endsWith(yearStr));
-        dispatch({ type: "NOTE_DATES_CHANGED", dates: new Set(filtered) });
+        const yearSuffix = `-${state.year}`;
+        const dates = new Set<string>();
+        const sections = new Map<string, string[]>();
+        for (const doc of docs) {
+          if (!doc.date.endsWith(yearSuffix)) continue;
+          dates.add(doc.date);
+          const types = doc.sectionTypes;
+          if (types && types.length > 0) sections.set(doc.date, [...types]);
+        }
+        dispatch({ type: "NOTE_DATES_CHANGED", dates, sections });
       });
 
     return () => { subscription.unsubscribe(); };
@@ -768,6 +779,7 @@ export function useNoteRepository({
     isSaving: state.isSaving,
     hasNote,
     noteDates: state.noteDates,
+    noteSections: state.noteSections,
     refreshNoteDates,
     isDecrypting,
     isContentReady,

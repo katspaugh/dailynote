@@ -4,12 +4,14 @@ import { useMonthViewState } from "../../hooks/useMonthViewState";
 import { useNoteKeyboardNav } from "../../hooks/useNoteKeyboardNav";
 import { parseDate } from "../../utils/date";
 import { SIDEBAR_COLLAPSED_KEY } from "../../utils/constants";
+import type { HabitMark } from "../../utils/habits";
 import styles from "./DayView.module.css";
 
 interface DayViewProps {
   date: string;
   noteDates: Set<string>;
   hasNote: (date: string) => boolean;
+  habitsFor?: (date: string) => HabitMark[];
   onDayClick: (date: string) => void;
   onMonthChange: (year: number, month: number) => void;
   onReturnToYear: () => void;
@@ -31,6 +33,7 @@ export function DayView({
   date,
   noteDates,
   hasNote,
+  habitsFor,
   onDayClick,
   onMonthChange,
   onReturnToYear,
@@ -100,6 +103,7 @@ export function DayView({
         year={year}
         month={month}
         hasNote={hasNote}
+        habitsFor={habitsFor}
         selectedDate={date}
         onDayClick={onDayClick}
         canNavigatePrev={canSelectPrevious}

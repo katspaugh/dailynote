@@ -17,3 +17,11 @@ export function stringToHue(str: string): number {
   }
   return ((hash % 360) + 360) % 360;
 }
+
+/** Number of hues in the section palette (see noteContent.module.css). */
+export const SECTION_HUE_SLOTS = 8;
+
+/** Palette slot (0..7) a section type is coloured with, everywhere it appears. */
+export function sectionHueSlot(type: string): number {
+  return Math.floor((stringToHue(type) / 360) * SECTION_HUE_SLOTS);
+}

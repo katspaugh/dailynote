@@ -1,10 +1,6 @@
-import { stringToHue } from "../utils/sectionTypes";
+import { SECTION_HUE_SLOTS, sectionHueSlot } from "../utils/sectionTypes";
 
-const PALETTE_SIZE = 8;
-
-function hueSlot(type: string): number {
-  return Math.floor((stringToHue(type) / 360) * PALETTE_SIZE);
-}
+const PALETTE_SIZE = SECTION_HUE_SLOTS;
 
 function applyHueSlot(el: HTMLElement, slot: number): void {
   const target = `section-hue-${slot}`;
@@ -30,7 +26,7 @@ export function applySectionColors(editor: HTMLElement): void {
   for (const header of headers) {
     const type = header.getAttribute("data-section-type");
     if (!type) continue;
-    const slot = hueSlot(type);
+    const slot = sectionHueSlot(type);
     applyHueSlot(header, slot);
     const body = header.nextElementSibling;
     if (body instanceof HTMLElement && !body.hasAttribute("data-section-type")) {

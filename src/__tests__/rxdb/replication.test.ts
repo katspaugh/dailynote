@@ -132,6 +132,26 @@ describe("createPullModifier", () => {
     expect(note.isDeleted).toBe(false);
   });
 
+  it("derives sectionTypes from decrypted content", async () => {
+    const pull = createPullModifier(mockCrypto);
+    const payload = {
+      content: '<div data-section-type="run">+run</div><div>5k</div>',
+      weather: null,
+    };
+    const row = {
+      date: "02-01-2024",
+      ciphertext: btoa(JSON.stringify(payload)),
+      nonce: "mocknonce",
+      key_id: "mockkey",
+      updated_at: "2024-01-02T00:00:00.000Z",
+      _modified: "2024-01-02T00:00:00.000Z",
+      _deleted: false,
+    };
+
+    const note = await pull(row);
+    expect(note.sectionTypes).toEqual(["run"]);
+  });
+
   it("returns empty content with isDeleted true when _deleted is true", async () => {
     const pull = createPullModifier(mockCrypto);
     const row = {

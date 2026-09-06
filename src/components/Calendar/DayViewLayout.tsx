@@ -16,6 +16,7 @@ import { useKeyboardInset } from "../../hooks/useKeyboardInset";
 import { getMonthName, isToday } from "../../utils/date";
 import { canEditNote } from "../../utils/noteRules";
 import { useNoteRepositoryContext } from "../../contexts/noteRepositoryContext";
+import type { HabitMark } from "../../utils/habits";
 
 import styles from "./DayViewLayout.module.css";
 
@@ -23,6 +24,7 @@ interface DayViewLayoutProps {
   year: number;
   month: number;
   hasNote: (date: string) => boolean;
+  habitsFor?: (date: string) => HabitMark[];
   selectedDate: string | null;
   onDayClick: (date: string) => void;
   canNavigatePrev: boolean;
@@ -51,6 +53,7 @@ export function DayViewLayout({
   year,
   month,
   hasNote,
+  habitsFor,
   selectedDate,
   onDayClick,
   canNavigatePrev,
@@ -150,6 +153,7 @@ export function DayViewLayout({
               year={year}
               month={month}
               hasNote={hasNote}
+              habitsFor={habitsFor}
               onDayClick={onDayClick}
               isDetailView
               selectedDate={selectedDate}

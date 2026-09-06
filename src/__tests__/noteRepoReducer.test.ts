@@ -50,6 +50,7 @@ function stateForDate(date: string): NoteRepoState {
     hasEdits: false,
     isSaving: false,
     noteDates: new Set<string>(),
+    noteSections: new Map<string, string[]>(),
     isSoftDeleted: false,
     repositoryVersion: 0,
     emptyNoteDate: null,
@@ -125,5 +126,33 @@ describe("noteRepoReducer emptyNoteDate latch", () => {
       noteIsEmpty: false,
     });
     expect(loaded.emptyNoteDate).toBeNull();
+  });
+});
+
+describe("noteRepoReducer note sections", () => {
+  it("stores dates and section types together", () => {
+    const state = stateForDate("01-06-2024");
+    const next = noteRepoReducer(state, {
+      type: "NOTE_DATES_CHANGED",
+      dates: new Set(["01-06-2024", "02-06-2024"]),
+      sections: new Map([["01-06-2024", ["run"]]]),
+    });
+    expect(next.noteDates.has("02-06-2024")).toBe(true);
+    expect(next.noteSections.get("01-06-2024")).toEqual(["run"]);
+    expect(next.noteSections.has("02-06-2024")).toBe(false);
+  });
+
+  it("clears sections when the user changes and a new database opens", () => {
+    const state = noteRepoReducer(stateForDate("01-06-2024"), {
+      type: "NOTE_DATES_CHANGED",
+      dates: new Set(["01-06-2024"]),
+      sections: new Map([["01-06-2024", ["run"]]]),
+    });
+    const switched = noteRepoReducer(
+      { ...state, dbName: "local" },
+      makeInputsAction({ date: "01-06-2024", userId: "user-1" }),
+    );
+    expect(switched.phase).toBe("opening");
+    expect(switched.noteSections.size).toBe(0);
   });
 });

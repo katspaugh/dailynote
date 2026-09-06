@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { createAppDatabase, type AppDatabase } from "../../storage/rxdb/database";
+import { noteMigrationStrategies, noteSchema } from "../../storage/rxdb/schemas";
 
 describe("createAppDatabase", () => {
   let db: AppDatabase | null = null;
@@ -34,6 +35,30 @@ describe("createAppDatabase", () => {
     expect(schema.properties).toHaveProperty("filename");
     expect(schema.properties).toHaveProperty("mimeType");
     expect(schema.properties).toHaveProperty("isDeleted");
+  });
+
+  it("notes schema is at v1 with sectionTypes and a migration for it", async () => {
+    db = await createAppDatabase("test-user-sections");
+    const schema = db.notes.schema.jsonSchema;
+    expect(schema.version).toBe(1);
+    expect(schema.properties).toHaveProperty("sectionTypes");
+    expect(noteSchema.version).toBe(1);
+    expect(Object.keys(noteMigrationStrategies)).toEqual(["1"]);
+  });
+
+  it("v1 migration derives sectionTypes from stored content", () => {
+    const migrated = noteMigrationStrategies[1](
+      {
+        date: "01-01-2024",
+        content: '<div data-section-type="run">+run</div><div>5k</div>',
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        isDeleted: false,
+        weather: null,
+      },
+      null as never,
+    );
+    expect(migrated.sectionTypes).toEqual(["run"]);
+    expect(migrated.content).toContain("+run");
   });
 
   it("images collection supports attachments", async () => {

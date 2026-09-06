@@ -22,6 +22,7 @@ import { useTheme } from "@/hooks/useTheme";
 import type { ThemePreference } from "@/services/themePreferences";
 import { getWeekdayOptions, setWeekStartPreference } from "@/utils/date";
 import { useWeatherContext } from "@/contexts/weatherContext";
+import { useHabits } from "@/hooks/useHabits";
 import { DebugKeyringSection } from "./DebugKeyringSection";
 import type { UseDebugKeyringReturn } from "../../hooks/useDebugKeyring";
 import styles from "./SettingsSidebar.module.css";
@@ -210,6 +211,50 @@ function CalendarSection({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HabitsSection() {
+  const { sectionTypes, togglePinned } = useHabits();
+
+  return (
+    <div className={styles.section}>
+      <p className={styles.sectionLabel}>Habits</p>
+      {sectionTypes.length === 0 ? (
+        <p className={styles.habitEmpty}>
+          Start an entry with <code>+name</code> to create a section. Pin the
+          ones you want to repeat and they show up under the composer and on
+          the calendar.
+        </p>
+      ) : (
+        sectionTypes.map((section) => (
+          <div key={section.type} className={styles.toggleRow}>
+            <span className={styles.habitLabel}>
+              <span
+                className={styles.habitSwatch}
+                data-hue-slot={section.slot}
+                aria-hidden="true"
+              />
+              <span className={styles.habitName}>+{section.type}</span>
+              <span className={styles.habitCount}>
+                {section.days === 1 ? "1 day" : `${section.days} days`}
+              </span>
+            </span>
+            <button
+              className={styles.switch}
+              type="button"
+              role="switch"
+              aria-checked={section.pinned}
+              aria-label={`Pin ${section.type} as a habit`}
+              data-checked={section.pinned}
+              onClick={() => togglePinned(section.type)}
+            >
+              <span className={styles.switchThumb} />
+            </button>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -543,6 +588,10 @@ export function SettingsSidebar({
             weekStart={weekStart}
             onWeekStartChange={handleWeekStartChange}
           />
+
+          <div className={styles.separator} />
+
+          <HabitsSection />
 
           <div className={styles.separator} />
 

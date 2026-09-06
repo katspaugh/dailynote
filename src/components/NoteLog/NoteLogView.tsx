@@ -18,8 +18,10 @@ import {
 import { NoteEditorHeader } from "../NoteEditor/NoteEditorHeader";
 import { useDebugNoteKeyId } from "../../hooks/useDebugNoteKeyId";
 import { useShareTarget } from "../../hooks/useShareTarget";
+import { useHabits } from "../../hooks/useHabits";
 import { applySectionColors } from "../../services/sectionColors";
 import { LogEntry } from "./LogEntry";
+import { HabitChips } from "./HabitChips";
 import { TimeLabel } from "./TimeLabel";
 import { useSectionTransform } from "./useSectionTransform";
 import contentStyles from "../../styles/noteContent.module.css";
@@ -123,6 +125,10 @@ export function NoteLogView({
     if (!displayWeather) return null;
     return weather.formatWeatherLabel(displayWeather);
   }, [displayWeather, weather]);
+
+  // Habits: chips under the composer and streaks in the header, today only
+  const showHabits = !readOnly && isToday(date);
+  const { habits } = useHabits({ todayContent: showHabits ? content : undefined });
 
   // Image upload
   const { onImageDrop } = useInlineImageUpload({
@@ -249,6 +255,37 @@ export function NoteLogView({
   }, [hasEditorContent, resetAutoSaveTimer]);
 
   useSectionTransform(editorRef, handleInput);
+
+  // Start a `+type` section in the composer, as typing the line would
+  const handlePickHabit = useCallback(
+    (type: string) => {
+      const el = editorRef.current;
+      if (!el) return;
+      // A lone <br> is an empty editor; drop it so the header takes line one
+      if (el.childNodes.length === 1 && el.firstChild instanceof HTMLBRElement) {
+        el.firstChild.remove();
+      }
+      const header = document.createElement("div");
+      header.setAttribute("data-section-type", type);
+      header.textContent = `+${type}`;
+      const body = document.createElement("div");
+      body.appendChild(document.createElement("br"));
+      el.append(header, body);
+      applySectionColors(el);
+
+      el.focus();
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.setStart(body, 0);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      handleInput();
+    },
+    [handleInput],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -408,6 +445,7 @@ export function NoteLogView({
         statusText={isDecrypting ? "Decrypting..." : null}
         weatherLabel={weatherLabel}
         debugKeyId={debugKeyId}
+        streaks={showHabits ? habits : undefined}
       />
 
       <div className={styles.timeline}>
@@ -451,6 +489,9 @@ export function NoteLogView({
                     onChange={handleFileChange}
                   />
                 </div>
+              )}
+              {showHabits && (
+                <HabitChips habits={habits} onPick={handlePickHabit} />
               )}
               <button
                 type="button"

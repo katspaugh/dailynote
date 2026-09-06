@@ -40,6 +40,20 @@ describe("RxDBNoteRepository", () => {
     }
   });
 
+  it("derives sectionTypes from content on save", async () => {
+    const repo = await makeRepo();
+    await repo.save(
+      "16-06-2024",
+      '<div data-section-type="run">+run</div><div>5k</div><div data-section-type="dream">+dream</div>',
+    );
+    const doc = await db!.notes.findOne("16-06-2024").exec();
+    expect(doc?.sectionTypes).toEqual(["run", "dream"]);
+
+    await repo.save("16-06-2024", "<p>plain</p>");
+    const updated = await db!.notes.findOne("16-06-2024").exec();
+    expect(updated?.sectionTypes).toEqual([]);
+  });
+
   it("updates an existing note", async () => {
     const repo = await makeRepo();
     await repo.save("10-03-2024", "Original content");

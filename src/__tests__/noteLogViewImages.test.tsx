@@ -21,7 +21,11 @@ const imageRepository = {
 };
 
 vi.mock("../contexts/noteRepositoryContext", () => ({
-  useNoteRepositoryContext: () => ({ imageRepository, weather: null }),
+  useNoteRepositoryContext: () => ({
+    imageRepository,
+    weather: null,
+    noteSections: new Map(),
+  }),
 }));
 
 vi.mock("../contexts/routingContext", () => ({

@@ -1,11 +1,14 @@
 import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection } from "rxdb/plugins/core";
 import { RxDBAttachmentsPlugin } from "rxdb/plugins/attachments";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 
 addRxPlugin(RxDBAttachmentsPlugin);
+addRxPlugin(RxDBMigrationSchemaPlugin);
 import {
   noteSchema,
+  noteMigrationStrategies,
   imageSchema,
   type NoteDocType,
   type ImageDocType,
@@ -72,7 +75,7 @@ async function doCreate(
   });
 
   await db.addCollections({
-    notes: { schema: noteSchema },
+    notes: { schema: noteSchema, migrationStrategies: noteMigrationStrategies },
     images: { schema: imageSchema },
   });
 

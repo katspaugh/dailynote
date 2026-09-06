@@ -1,5 +1,6 @@
 import { parseDate } from "../../utils/date";
 import { getMoonPhaseEmoji, getMoonPhaseName } from "../../utils/moonPhase";
+import type { HabitStatus } from "../../hooks/useHabits";
 import styles from "./NoteEditor.module.css";
 
 interface NoteEditorHeaderProps {
@@ -12,6 +13,8 @@ interface NoteEditorHeaderProps {
   onRestore?: () => void;
   weatherLabel?: string | null;
   debugKeyId?: string | null;
+  /** Pinned habits with their current streaks (today's view only). */
+  streaks?: HabitStatus[];
 }
 
 export function NoteEditorHeader({
@@ -24,6 +27,7 @@ export function NoteEditorHeader({
   onRestore,
   weatherLabel,
   debugKeyId,
+  streaks,
 }: NoteEditorHeaderProps) {
   const parsed = parseDate(date);
   const moonEmoji = parsed ? getMoonPhaseEmoji(parsed) : "";
@@ -39,6 +43,21 @@ export function NoteEditorHeader({
         {weatherLabel && (
           <span className={styles.weatherLabel}>
             {weatherLabel}
+          </span>
+        )}
+        {streaks && streaks.length > 0 && (
+          <span className={styles.streaks} aria-label="Habit streaks">
+            {streaks.map((habit) => (
+              <span
+                key={habit.type}
+                className={styles.streak}
+                data-hue-slot={habit.slot}
+                title={`${habit.type}: ${habit.streak} day streak`}
+              >
+                <span className={styles.streakDot} aria-hidden="true" />
+                <b>{habit.streak}</b> {habit.type}
+              </span>
+            ))}
           </span>
         )}
         {showReadonlyBadge && (

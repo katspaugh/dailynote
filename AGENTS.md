@@ -122,7 +122,8 @@ Every new `catch` block in stores, storage, or domain code must call `reportErro
 
 ## Data Model (src/types/index.ts)
 
-- Note: date, content (sanitized HTML), updatedAt
+- Note: date, content (sanitized HTML), updatedAt, weather?
+- RxDB note doc also carries `sectionTypes` (schema v1), derived from `content` on every write path (save, replication pull, legacy migration). Never authored directly.
 - SyncedNote: note + revision, serverUpdatedAt?, deleted?
 - NoteImage: id, noteDate, type, filename, mimeType, width, height, size, createdAt
 
@@ -149,6 +150,12 @@ Every new `catch` block in stores, storage, or domain code must call `reportErro
 
 - ContentEditable + HTML sanitization save/load
 - Inline image: paste/drop, compressed. `data-image-id` attrs, URLs via `ImageUrlManager`
+
+## Habits
+
+- A habit is a pinned section type (`+run`). Done on a day = that day's note has the section. No separate store.
+- Pinned list: device preference (`services/habitPreferences.ts`, localStorage). Pure helpers in `utils/habits.ts`; view model in `hooks/useHabits.ts`.
+- Surfaces: chips under the composer (today only), hue dots in calendar cells, streaks in the note header, pin toggles in Settings.
 
 ## UI Flows
 

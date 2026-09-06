@@ -1,9 +1,11 @@
 import { MonthGrid } from "./MonthGrid";
+import type { HabitMark } from "../../utils/habits";
 import styles from "./Calendar.module.css";
 
 interface CalendarGridProps {
   year: number;
   hasNote: (date: string) => boolean;
+  habitsFor?: (date: string) => HabitMark[];
   onDayClick?: (date: string) => void;
   onMonthClick?: (year: number, month: number) => void;
   selectedDate?: string | null;
@@ -15,6 +17,7 @@ interface CalendarGridProps {
 export function CalendarGrid({
   year,
   hasNote,
+  habitsFor,
   onDayClick,
   onMonthClick,
   selectedDate,
@@ -32,6 +35,7 @@ export function CalendarGrid({
           year={year}
           month={monthIndex}
           hasNote={hasNote}
+          habitsFor={habitsFor}
           onDayClick={onDayClick}
           onMonthClick={onMonthClick}
           selectedDate={selectedDate}

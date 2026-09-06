@@ -10,6 +10,7 @@ import {
   getDayCellState,
 } from "../../utils/date";
 import { DayCellState } from "../../types";
+import type { HabitMark } from "../../utils/habits";
 import styles from "./MonthGrid.module.css";
 
 function computeWeeks(year: number, month: number) {
@@ -38,6 +39,7 @@ interface MonthGridProps {
   year: number;
   month: number;
   hasNote: (date: string) => boolean;
+  habitsFor?: (date: string) => HabitMark[];
   onDayClick?: (date: string) => void;
   onMonthClick?: (year: number, month: number) => void;
   isDetailView?: boolean;
@@ -50,6 +52,7 @@ export function MonthGrid({
   year,
   month,
   hasNote,
+  habitsFor,
   onDayClick,
   onMonthClick,
   isDetailView = false,
@@ -142,6 +145,7 @@ export function MonthGrid({
                   date={cell.date}
                   state={state}
                   hasNote={hasNote(dateStr)}
+                  habits={habitsFor?.(dateStr)}
                   selected={selectedDate === dateStr}
                   onClick={onDayClick ? () => onDayClick(dateStr) : undefined}
                 />

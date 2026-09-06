@@ -13,6 +13,7 @@ export const LOCATION_PROMPT_SHOWN_KEY = `${STORAGE_PREFIX}location_prompt_shown
 export const VIEW_PREFERENCE_KEY = `${STORAGE_PREFIX}view_preference_v1`;
 export const SIDEBAR_COLLAPSED_KEY = `${STORAGE_PREFIX}sidebar_collapsed_v1`;
 export const DEBUG_MODE_KEY = `${STORAGE_PREFIX}debug_mode_v1`;
+export const PINNED_HABITS_KEY = `${STORAGE_PREFIX}pinned_habits_v1`;
 
 export const URL_PARAMS = {
   DATE: "date",

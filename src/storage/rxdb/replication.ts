@@ -11,6 +11,7 @@ import type { Result } from "../../domain/result";
 import { reportError } from "../../utils/errorReporter";
 import { parseEncryptedBlobRecord, parseSupabaseNoteRow, parseSupabaseImageRow } from "../parsers";
 import { bytesToBase64 } from "../cryptoUtils";
+import { extractSectionTypes } from "../../utils/sectionTypes";
 
 export interface ReplicationCrypto {
   encrypt(payload: NotePayload): Promise<Result<EncryptedNote, CryptoError>>;
@@ -93,6 +94,7 @@ export function createPullModifier(
       return {
         date: row.date,
         content: "",
+        sectionTypes: [],
         updatedAt,
         isDeleted: true,
         weather: null,
@@ -116,6 +118,7 @@ export function createPullModifier(
     return {
       date: row.date,
       content,
+      sectionTypes: extractSectionTypes(content),
       updatedAt,
       isDeleted: false,
       weather: weather ?? null,

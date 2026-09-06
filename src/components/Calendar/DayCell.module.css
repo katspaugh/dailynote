@@ -73,6 +73,48 @@
   background-color: var(--color-note-indicator);
 }
 
+/* Note dot followed by one hue dot per pinned habit done that day */
+.dots {
+  position: absolute;
+  bottom: 2px;
+  display: flex;
+  gap: 2px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--color-note-indicator);
+}
+
+.dot[data-hue-slot] {
+  background-color: hsl(var(--dot-hue) var(--dot-node, 40% 45%));
+}
+
+.dot[data-hue-slot="0"] { --dot-hue: 0; }
+.dot[data-hue-slot="1"] { --dot-hue: 45; }
+.dot[data-hue-slot="2"] { --dot-hue: 90; }
+.dot[data-hue-slot="3"] { --dot-hue: 135; }
+.dot[data-hue-slot="4"] { --dot-hue: 180; }
+.dot[data-hue-slot="5"] { --dot-hue: 225; }
+.dot[data-hue-slot="6"] { --dot-hue: 270; }
+.dot[data-hue-slot="7"] { --dot-hue: 315; }
+
+:root[data-theme="dark"] .dot {
+  --dot-node: 50% 65%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dot {
+    --dot-node: 50% 65%;
+  }
+}
+
+.selected .dot {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
 @media (min-width: 1200px) {
   .dayCell {
     font-size: 0.7rem;
@@ -87,9 +129,14 @@
   }
 }
 
-:global([data-month-view="true"]) .indicator {
+:global([data-month-view="true"]) .indicator,
+:global([data-month-view="true"]) .dot {
   width: 4px;
   height: 4px;
+}
+
+:global([data-month-view="true"]) .indicator,
+:global([data-month-view="true"]) .dots {
   bottom: 2px;
 }
 
@@ -98,9 +145,18 @@
     font-size: clamp(0.75rem, 1.5vh, 1.4rem);
   }
 
-  :global([data-month-view="true"]) .indicator {
+  :global([data-month-view="true"]) .indicator,
+  :global([data-month-view="true"]) .dot {
     width: clamp(6px, 0.4em, 14px);
     height: clamp(6px, 0.4em, 14px);
+  }
+
+  :global([data-month-view="true"]) .indicator,
+  :global([data-month-view="true"]) .dots {
     bottom: clamp(3px, 0.25em, 8px);
+  }
+
+  :global([data-month-view="true"]) .dots {
+    gap: clamp(2px, 0.15em, 5px);
   }
 }

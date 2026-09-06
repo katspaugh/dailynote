@@ -1,10 +1,14 @@
-import type { RxJsonSchema } from "rxdb";
+import type { MigrationStrategies, RxJsonSchema } from "rxdb";
+import { extractSectionTypes } from "../../utils/sectionTypes";
 
 export interface NoteDocType {
   date: string;
   content: string;
   updatedAt: string;
   isDeleted: boolean;
+  /** Section types (`+run`, `+dream`) present in content. Derived, never
+   *  authored: every write path recomputes it from `content`. */
+  sectionTypes?: string[];
   weather?: {
     icon: string;
     temperatureHigh: number;
@@ -28,7 +32,7 @@ export interface ImageDocType {
 }
 
 export const noteSchema: RxJsonSchema<NoteDocType> = {
-  version: 0,
+  version: 1,
   primaryKey: "date",
   type: "object",
   properties: {
@@ -36,6 +40,10 @@ export const noteSchema: RxJsonSchema<NoteDocType> = {
     content: { type: "string" },
     updatedAt: { type: "string" },
     isDeleted: { type: "boolean" },
+    sectionTypes: {
+      type: "array",
+      items: { type: "string" },
+    },
     weather: {
       type: ["object", "null"],
       properties: {
@@ -48,6 +56,18 @@ export const noteSchema: RxJsonSchema<NoteDocType> = {
     },
   },
   required: ["date", "content", "updatedAt", "isDeleted"],
+};
+
+/**
+ * Schema migrations for the notes collection. Each key is the version the
+ * strategy migrates *to*; RxDB chains them from the stored version.
+ */
+export const noteMigrationStrategies: MigrationStrategies = {
+  // v1: sectionTypes derived from content
+  1: (doc: NoteDocType) => ({
+    ...doc,
+    sectionTypes: extractSectionTypes(doc.content),
+  }),
 };
 
 export const imageSchema: RxJsonSchema<ImageDocType> = {

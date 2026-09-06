@@ -5,6 +5,7 @@ import type { Result } from "../../domain/result";
 import type { AppDatabase } from "./database";
 import { ok, err } from "../../domain/result";
 import { reportError } from "../../utils/errorReporter";
+import { extractSectionTypes } from "../../utils/sectionTypes";
 
 export class RxDBNoteRepository implements NoteRepository {
   readonly db: AppDatabase;
@@ -32,6 +33,7 @@ export class RxDBNoteRepository implements NoteRepository {
       await this.db.notes.upsert({
         date,
         content,
+        sectionTypes: extractSectionTypes(content),
         updatedAt: new Date().toISOString(),
         isDeleted: false,
         weather: weather ?? null,

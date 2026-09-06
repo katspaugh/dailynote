@@ -1,0 +1,94 @@
+/* Pinned habits under the composer text, coloured like their sections */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--color-border);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+  border: 1.5px solid hsl(var(--chip-hue) var(--chip-line));
+  color: hsl(var(--chip-hue) var(--chip-ink));
+  transition:
+    background-color var(--transition-fast),
+    transform 120ms ease;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid hsl(var(--chip-hue) var(--chip-node));
+  background: transparent;
+}
+
+.chip[data-done] {
+  background: hsl(var(--chip-hue) var(--chip-fill));
+  border-color: transparent;
+}
+
+.chip[data-done] .dot {
+  background: hsl(var(--chip-hue) var(--chip-node));
+  border-color: transparent;
+}
+
+/* Same 8 hues as the section palette in noteContent.module.css */
+.chip[data-hue-slot="0"] { --chip-hue: 0; }
+.chip[data-hue-slot="1"] { --chip-hue: 45; }
+.chip[data-hue-slot="2"] { --chip-hue: 90; }
+.chip[data-hue-slot="3"] { --chip-hue: 135; }
+.chip[data-hue-slot="4"] { --chip-hue: 180; }
+.chip[data-hue-slot="5"] { --chip-hue: 225; }
+.chip[data-hue-slot="6"] { --chip-hue: 270; }
+.chip[data-hue-slot="7"] { --chip-hue: 315; }
+
+.chip {
+  --chip-ink: 40% 45%;
+  --chip-fill: 50% 95%;
+  --chip-line: 45% 65%;
+  --chip-node: 40% 45%;
+}
+
+:root[data-theme="dark"] .chip {
+  --chip-ink: 50% 75%;
+  --chip-fill: 30% 20%;
+  --chip-line: 40% 45%;
+  --chip-node: 50% 65%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .chip {
+    --chip-ink: 50% 75%;
+    --chip-fill: 30% 20%;
+    --chip-line: 40% 45%;
+    --chip-node: 50% 65%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}

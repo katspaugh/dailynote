@@ -2,6 +2,7 @@ import type { AppDatabase } from "./rxdb/database";
 import type { SavedWeather } from "../types/index";
 import type { E2eeService } from "../domain/crypto/e2eeService";
 import { reportError } from "../utils/errorReporter";
+import { extractSectionTypes } from "../utils/sectionTypes";
 
 export interface LegacyEncryptedNote {
   date: string;
@@ -126,6 +127,7 @@ export async function migrateLegacyData(
       await db.notes.insert({
         date: note.date,
         content: payload.content,
+        sectionTypes: extractSectionTypes(payload.content),
         updatedAt: note.updatedAt,
         isDeleted: false,
         weather: payload.weather ?? null,

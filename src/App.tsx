@@ -31,6 +31,8 @@ import { WeatherProvider } from "./contexts/WeatherProvider";
 import { getTodayString, parseDate } from "./utils/date";
 import { useDebugMode } from "./hooks/useDebugMode";
 import { useDebugKeyring } from "./hooks/useDebugKeyring";
+import { usePinnedHabits } from "./hooks/usePinnedHabits";
+import { habitMarksOn } from "./utils/habits";
 import calendarStyles from "./components/Calendar/Calendar.module.css";
 
 function getLatestNoteInMonth(
@@ -78,6 +80,14 @@ function App() {
   const handleReturnToYear = useCallback(() => {
     navigateToCalendar(year);
   }, [navigateToCalendar, year]);
+
+  // Pinned habits done per day, for the calendar's hue dots
+  const { pinned: pinnedHabits } = usePinnedHabits();
+  const habitsFor = useCallback(
+    (targetDate: string) =>
+      habitMarksOn(notes.noteSections, pinnedHabits, targetDate),
+    [notes.noteSections, pinnedHabits],
+  );
 
   const handleCalendarMonthClick = useCallback(
     (targetYear: number, targetMonth: number) => {
@@ -304,6 +314,7 @@ function App() {
                       date={date}
                       noteDates={notes.noteDates}
                       hasNote={notes.hasNote}
+                      habitsFor={habitsFor}
                       onDayClick={navigateToDate}
                       onMonthChange={handleDayViewMonthChange}
                       onReturnToYear={handleReturnToYear}
@@ -323,6 +334,7 @@ function App() {
                       weekStartVersion={weekStartVersion}
                       year={year}
                       hasNote={notes.hasNote}
+                      habitsFor={habitsFor}
                       onDayClick={navigateToDate}
                       onMonthClick={handleCalendarMonthClick}
                     />

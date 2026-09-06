@@ -75,6 +75,54 @@
   margin-left: var(--spacing-sm);
 }
 
+/* Habit streaks: quiet, tabular, coloured like their sections */
+.streaks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.streak b {
+  font-weight: var(--font-weight-semibold);
+  color: color-mix(in srgb, var(--color-text) 75%, var(--color-text-muted));
+}
+
+.streakDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--streak-hue) var(--streak-node, 40% 45%));
+}
+
+.streak[data-hue-slot="0"] { --streak-hue: 0; }
+.streak[data-hue-slot="1"] { --streak-hue: 45; }
+.streak[data-hue-slot="2"] { --streak-hue: 90; }
+.streak[data-hue-slot="3"] { --streak-hue: 135; }
+.streak[data-hue-slot="4"] { --streak-hue: 180; }
+.streak[data-hue-slot="5"] { --streak-hue: 225; }
+.streak[data-hue-slot="6"] { --streak-hue: 270; }
+.streak[data-hue-slot="7"] { --streak-hue: 315; }
+
+:root[data-theme="dark"] .streak {
+  --streak-node: 50% 65%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .streak {
+    --streak-node: 50% 65%;
+  }
+}
 
 .readonlyBadge {
   font-size: var(--font-size-xs);

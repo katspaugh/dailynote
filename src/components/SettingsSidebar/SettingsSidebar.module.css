@@ -335,6 +335,68 @@
   color: var(--color-text);
 }
 
+/* Habits: one row per section type seen, with its palette swatch */
+.habitLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.habitSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: hsl(var(--swatch-hue) var(--swatch-node, 40% 45%));
+}
+
+.habitSwatch[data-hue-slot="0"] { --swatch-hue: 0; }
+.habitSwatch[data-hue-slot="1"] { --swatch-hue: 45; }
+.habitSwatch[data-hue-slot="2"] { --swatch-hue: 90; }
+.habitSwatch[data-hue-slot="3"] { --swatch-hue: 135; }
+.habitSwatch[data-hue-slot="4"] { --swatch-hue: 180; }
+.habitSwatch[data-hue-slot="5"] { --swatch-hue: 225; }
+.habitSwatch[data-hue-slot="6"] { --swatch-hue: 270; }
+.habitSwatch[data-hue-slot="7"] { --swatch-hue: 315; }
+
+:root[data-theme="dark"] .habitSwatch {
+  --swatch-node: 50% 65%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .habitSwatch {
+    --swatch-node: 50% 65%;
+  }
+}
+
+.habitName {
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habitCount {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.habitEmpty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.habitEmpty code {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+}
+
 .switch {
   width: 36px;
   height: 20px;

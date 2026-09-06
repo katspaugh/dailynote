@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarGrid } from "./CalendarGrid";
+import type { HabitMark } from "../../utils/habits";
 import styles from "./Calendar.module.css";
 
 interface CalendarProps {
   year: number;
   hasNote: (date: string) => boolean;
+  habitsFor?: (date: string) => HabitMark[];
   onDayClick?: (date: string) => void;
   onMonthClick?: (year: number, month: number) => void;
   now?: Date;
@@ -14,6 +16,7 @@ interface CalendarProps {
 export function Calendar({
   year,
   hasNote,
+  habitsFor,
   onDayClick,
   onMonthClick,
   now,
@@ -78,6 +81,7 @@ export function Calendar({
       <CalendarGrid
         year={year}
         hasNote={hasNote}
+        habitsFor={habitsFor}
         onDayClick={onDayClick}
         onMonthClick={onMonthClick}
         onWeekStartChange={handleWeekStartChange}
